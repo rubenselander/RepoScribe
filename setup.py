@@ -20,8 +20,7 @@ setup(
     python_requires=">=3.8",  # Change as appropriate
     entry_points={
         "console_scripts": [
-            "reposcribe=reposcribe.core:create_doc_file",  # Adjust the path as necessary
+            "reposcribe=reposcribe.cli:main",  # Assuming 'cli.py' contains the CLI interface
         ],
     },
-    install_requires=[],
 )
