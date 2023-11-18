@@ -80,12 +80,12 @@ def concatenate_files_to_markdown(directory: str) -> str:
 
 
 def create_doc_file(
-    path: str, format: str = "md", save_path: str = None, include_file_tree: bool = True
+    root_path: str, format: str = "md", save_path: str = None, include_file_tree: bool = True
 ) -> str:
     """Generates a Markdown documentation for a project, optionally including the file tree.
 
     Args:
-        path: The path to the root of the project, folder or file to document.
+        root_path: The path to the root of the project, folder or file to document.
         format: The format of the output documentation (currently supports only 'md').
         save_path: The path where the output documentation should be saved (if provided).
         include_file_tree: Flag to include the file tree in the documentation.
@@ -94,9 +94,9 @@ def create_doc_file(
         A string containing the generated documentation.
     """
     try:
-        documentation = concatenate_files_to_markdown(path)
+        documentation = concatenate_files_to_markdown(root_path)
         if include_file_tree:
-            file_tree = format_directory_structure(path)
+            file_tree = format_directory_structure(root_path)
             documentation += "\n\n## Directory Structure\n```\n" + file_tree + "```"
 
         if save_path:
