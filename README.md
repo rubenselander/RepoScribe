@@ -1,5 +1,5 @@
 # RepoScribe
-RepoScribe is a basic, lightweight tool for compiling your codebase and directory structure into a structured Markdown document. It is designed to enrich Large Language Models (LLMs) with project-specific context, but it's also highly effective for straightforward navigation and review of code projects or folders.
+RepoScribe is a basic, lightweight tool for compiling your codebase and directory structure into a structured Markdown document. It is designed to enrich Large Language Models (LLMs) with project-specific context, but it's also highly effective for straightforward navigation and review of code projects or folders. The python package is self-contained, with no external dependencies.
 
 
 <div style="text-align: center;">
