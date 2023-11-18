@@ -21,7 +21,7 @@ def main():
     )
     args = parser.parse_args()
 
-    create_doc_file(path=args.root_path, save_path=args.save_path)
+    create_doc_file(path=args.path, save_path=args.save_path)
 
 
 if __name__ == "__main__":
