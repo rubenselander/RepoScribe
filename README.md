@@ -1,5 +1,8 @@
-
 # RepoScribe
+
+<div style="text-align: center;">
+  <img src="reposcribe_logo.png" alt="The kindly helper" style="max-width: 30%; height: auto; display: block; margin: 0 auto;">
+</div>
 
 RepoScribe is a basic, lightweight tool for compiling your codebase and directory structure into a structured Markdown document. It is designed to enrich Large Language Models (LLMs) with project-specific context, but it's also highly effective for straightforward navigation and review of code projects or folders.
 
