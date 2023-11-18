@@ -1,24 +1,27 @@
-import setuptools
+from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
-setuptools.setup(
-    name="reposcribe",
-    version="0.0.1",
+setup(
+    name="RepoScribe",
+    version="0.1.0",
     author="Ruben Selander",
-    description="Quicksample Test Package for SQLShack Demo",
     author_email="info@nordicintel.com",
-    long_description=long_description,  # Long description read from the the readme file
+    description="A lightweight tool to compile project files and directories into a structured Markdown document",
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    packages=setuptools.find_packages(),  # List of all python modules to be installed
+    url="https://github.com/reversehobo/RepoScribe",
+    packages=find_packages(),
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Topic :: Software Development :: Documentation",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ],  # Information to filter the project on PyPi website
-    python_requires=">=3.6",  # Minimum version requirement of the package
-    py_modules=["quicksample"],  # Name of the python package
-    package_dir={"": "quicksample/src"},  # Directory of the source code of the package
-    install_requires=[],  # Install other dependencies if any
+        "Programming Language :: Python :: 3",
+    ],
+    python_requires=">=3.8",  # Change as appropriate
+    entry_points={
+        "console_scripts": [
+            "reposcribe=reposcribe.core:create_doc_file",  # Adjust the path as necessary
+        ],
+    },
+    install_requires=[],
 )
