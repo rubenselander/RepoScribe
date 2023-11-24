@@ -19,6 +19,18 @@ def get_language_extension(file: str) -> str:
         ".cpp": "cpp",
         ".c": "c",
         ".sh": "bash",
+        ".R": "r",
+        ".cs": "csharp",
+        ".go": "go",
+        ".php": "php",
+        ".rb": "ruby",
+        ".rs": "rust",
+        ".sql": "sql",
+        ".swift": "swift",
+        ".ts": "typescript",
+        ".vb": "vb",
+        ".xml": "xml",
+        ".yml": "yaml",
         # Add more mappings as needed
     }
     return extensions.get(os.path.splitext(file)[1], "")
