@@ -15,8 +15,6 @@ To install RepoScribe, simply use pip:
 pip install RepoScribe
 ```
 
-RepoScribe is designed to be lightweight and self-contained, with no external dependencies. This makes it easy to integrate into your projects without worrying about additional package requirements.
-
 ## Usage
 
 ### In the Terminal
