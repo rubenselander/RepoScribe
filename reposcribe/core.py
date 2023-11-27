@@ -72,7 +72,11 @@ def should_ignore(path: str, ignore_patterns: list) -> bool:
         True if the path should be ignored, False otherwise.
     """
     for pattern in ignore_patterns:
-        if fnmatch.fnmatch(path, pattern):
+        # Clean the pattern by removing newline characters and leading/trailing spaces
+        clean_pattern = pattern.strip()
+
+        # Check if the pattern matches any part of the path
+        if fnmatch.fnmatch(path, "*" + clean_pattern) or fnmatch.fnmatch(path, clean_pattern + "*"):
             return True
     return False
 
@@ -95,6 +99,7 @@ def format_directory_structure(directory: str, ignore_patterns: list) -> str:
                 item_path = os.path.join(current_dir, item)
                 if should_ignore(item_path, ignore_patterns):
                     continue
+
                 if os.path.isdir(item_path):
                     tree_str += "    " * indent_level + f"- {item}/\n"
                     tree_str += recurse_folder(item_path, indent_level + 1)
@@ -105,6 +110,49 @@ def format_directory_structure(directory: str, ignore_patterns: list) -> str:
         return tree_str
 
     return recurse_folder(directory, 0)
+
+
+def get_filtered_paths(directory: str, ignore_patterns: list) -> tuple[list[str], list[str]]:
+    """Returns a tuple of two lists: the first containing all paths in the directory to include, the second containing all paths to ignore.
+
+    Args:
+        directory: The root directory path.
+        ignore_patterns: A list of patterns to ignore.
+
+    Returns:
+        A tuple of two lists: the first containing all paths in the directory to include, the second containing all paths to ignore.
+    """
+    include_paths = []
+    ignore_paths = []
+    for dirpath, dirnames, filenames in os.walk(directory):
+        for dirname in dirnames:
+            path = os.path.join(dirpath, dirname)
+            if should_ignore(path, ignore_patterns):
+                ignore_paths.append(path)
+            else:
+                include_paths.append(path)
+        for filename in filenames:
+            path = os.path.join(dirpath, filename)
+            if should_ignore(path, ignore_patterns):
+                ignore_paths.append(path)
+            else:
+                include_paths.append(path)
+
+    # def recurse_folder(directory: str, indent_level: int) -> str:
+    #     try:
+    #         for item in sorted(os.listdir(directory)):
+    #             item_path = os.path.join(directory, item)
+    #             if should_ignore(item_path, ignore_patterns):
+    #                 continue
+
+    #             if os.path.isdir(item_path):
+    #                 tree_str += "    " * indent_level + f"- {item}/\n"
+    #                 tree_str += recurse_folder(item_path, indent_level + 1)
+    #             else:
+    #                 tree_str += "    " * indent_level + f"- {item}\n"
+    #     except OSError as e:
+    #         tree_str += f"    " * indent_level + f"- Error accessing folder: {e}\n"
+    #     return tree_str
 
 
 def concatenate_files_to_markdown(directory: str, ignore_patterns: list) -> str:
