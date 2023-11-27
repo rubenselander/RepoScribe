@@ -2,6 +2,9 @@ import fnmatch
 import os
 
 
+DEFAULT_GITIGNORE_TXT_PATH = "reposcribe/ignore.txt"
+
+
 def get_language_extension(file: str) -> str:
     """Determines the language extension for Markdown code blocks based on file extension.
 
@@ -151,7 +154,7 @@ def create_doc_file(
     """
     gitignore_path = os.path.join(root_path, ".gitignore")
     if not os.path.exists(gitignore_path):
-        gitignore_path = os.path.join(root_path, "reposcribe", "reposcribe.gitignore")
+        gitignore_path = os.path.join(root_path, "reposcribe", DEFAULT_GITIGNORE_TXT_PATH)
     ignore_patterns = read_gitignore(gitignore_path)
 
     try:
