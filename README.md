@@ -52,11 +52,13 @@ print(project_doc)
 - Simple and intuitive command-line interface.
 - Flexible usage - run in your project's root directory with no arguments or specify paths as needed.
 
+- **File Type Filters**: Specify a list of file extensions or file names to include or exclude from the documentation.
+
 ## Planned Features
 
 - **Multiple Output Formats**: Allow exporting documentation to formats like HTML, PDF, or a Word document.
 - **Code Syntax Highlighting**: Integrate syntax highlighting in the generated Markdown for better readability of code snippets.
 - **Documenting Non-Code Files**: Include a structured summary of non-code files (like images, text files) in the project.
 - **GitHub Integration**: Generate documentation by specifying a public GitHub repository.
-- **File Type Filters**: Specify a list of file extensions or file names to include or exclude from the documentation.
 - **Dependency Graphs**: Generate visual dependency graphs for the project, showing how different files and modules are interconnected.
+
