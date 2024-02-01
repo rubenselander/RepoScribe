@@ -1,20 +1,15 @@
-import fnmatch
 import os
+from pathlib import Path
+import re
 
 
-DEFAULT_GITIGNORE_TXT_PATH = "reposcribe/ignore.txt"
+DEFAULT_IGNORE_FILE_PATH = "reposcribe/ignore.txt"
 
 
-def get_language_extension(file: str) -> str:
-    """Determines the language extension for Markdown code blocks based on file extension.
+def get_language_extensions() -> dict:
+    """Returns a dictionary of file extensions and their corresponding language."""
 
-    Args:
-        file: The filename with extension.
-
-    Returns:
-        A string representing the programming language of the file for Markdown formatting.
-    """
-    extensions = {
+    return {
         ".py": "python",
         ".js": "javascript",
         ".html": "html",
@@ -33,129 +28,106 @@ def get_language_extension(file: str) -> str:
         ".swift": "swift",
         ".ts": "typescript",
         ".vb": "vb",
-        ".xml": "xml",
         ".yml": "yaml",
+        ".yaml": "yaml",
+        ".md": None,
         # Add more mappings as needed
     }
-    return extensions.get(os.path.splitext(file)[1], "")
 
 
-def read_gitignore(gitignore_path: str) -> list:
-    """Reads a .gitignore file and returns a list of patterns to ignore.
-
-    Args:
-        gitignore_path: The path to the .gitignore file.
-
-    Returns:
-        A list of patterns to ignore.
-    """
-    ignore_patterns = []
-    try:
-        with open(gitignore_path, "r") as file:
-            for line in file:
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    ignore_patterns.append(line)
-    except FileNotFoundError:
-        pass
-    return ignore_patterns
+def pattern_to_regex(pattern):
+    """Convert a glob pattern to a regex pattern for matching, optimized for directory checks."""
+    pattern = re.escape(pattern)  # Escape all regex characters
+    pattern = pattern.replace(r"\*", ".*")  # Replace '*' with '.*'
+    pattern = pattern.replace(r"\?", ".")  # Replace '?' with '.'
+    if pattern.endswith("/"):  # Special handling for directory patterns
+        pattern = pattern[:-1]  # Remove trailing slash for regex compatibility
+    pattern += r"($|/)"  # Match end of string or directory separator
+    return re.compile(pattern)
 
 
-def should_ignore(path: str, ignore_patterns: list) -> bool:
-    """Determines if a given path should be ignored based on .gitignore patterns.
+def load_ignore_patterns(file_path):
+    """Load ignore patterns from a file and compile them into regex."""
+    with open(file_path, "r") as file:
+        patterns = [pattern_to_regex(line.strip()) for line in file if line.strip()]
+    return patterns
 
-    Args:
-        path: The path to check.
-        ignore_patterns: A list of patterns to ignore.
 
-    Returns:
-        True if the path should be ignored, False otherwise.
-    """
+def should_ignore_path(path, ignore_patterns):
+    """Check if the given path matches any of the ignore patterns."""
     for pattern in ignore_patterns:
-        # Clean the pattern by removing newline characters and leading/trailing spaces
-        clean_pattern = pattern.strip()
-
-        # Check if the pattern matches any part of the path
-        if fnmatch.fnmatch(path, "*" + clean_pattern) or fnmatch.fnmatch(path, clean_pattern + "*"):
+        if pattern.search(str(path)):
             return True
     return False
 
 
-def format_directory_structure(directory: str, ignore_patterns: list) -> str:
-    """Creates a structured representation of the directory tree, excluding ignored paths.
+def find_files_with_extensions(
+    extensions=[".py"], root_folder=None, ignore_patterns_file=DEFAULT_IGNORE_FILE_PATH
+):
+    """
+    Find all file paths matching given extensions, excluding those that match patterns in ignore_patterns.txt.
 
-    Args:
-        directory: The root directory path.
-        ignore_patterns: A list of patterns to ignore.
+    Parameters:
+    - extensions: List of extensions to include.
+    - root_folder: Root directory to search within. Defaults to the current working directory.
+    - ignore_patterns_file: Path to a file containing patterns of files to ignore.
 
     Returns:
-        A string representing the formatted directory tree structure.
+    - List of file paths matching the criteria.
     """
+    if root_folder is None:
+        root_folder = Path.cwd()
+    else:
+        root_folder = Path(root_folder)
 
-    def recurse_folder(current_dir: str, indent_level: int) -> str:
-        tree_str = ""
-        try:
-            for item in sorted(os.listdir(current_dir)):
-                item_path = os.path.join(current_dir, item)
-                if should_ignore(item_path, ignore_patterns):
-                    continue
+    ignore_patterns = load_ignore_patterns(ignore_patterns_file)
+    matching_files = []
 
-                if os.path.isdir(item_path):
-                    tree_str += "    " * indent_level + f"- {item}/\n"
-                    tree_str += recurse_folder(item_path, indent_level + 1)
-                else:
-                    tree_str += "    " * indent_level + f"- {item}\n"
-        except OSError as e:
-            tree_str += f"    " * indent_level + f"- Error accessing folder: {e}\n"
-        return tree_str
+    def search_directory(directory):
+        for path in directory.iterdir():
+            if should_ignore_path(path, ignore_patterns):
+                continue  # Skip ignored paths
+            if path.is_dir():
+                search_directory(path)  # Recursively search directories
+            elif any(path.suffix == ext for ext in extensions):
+                matching_files.append(str(path))
 
-    return recurse_folder(directory, 0)
-
-
-def get_filtered_paths(directory: str, ignore_patterns: list) -> tuple[list[str], list[str]]:
-    """Returns a tuple of two lists: the first containing all paths in the directory to include, the second containing all paths to ignore.
-
-    Args:
-        directory: The root directory path.
-        ignore_patterns: A list of patterns to ignore.
-
-    Returns:
-        A tuple of two lists: the first containing all paths in the directory to include, the second containing all paths to ignore.
-    """
-    include_paths = []
-    ignore_paths = []
-    for dirpath, dirnames, filenames in os.walk(directory):
-        for dirname in dirnames:
-            path = os.path.join(dirpath, dirname)
-            if should_ignore(path, ignore_patterns):
-                ignore_paths.append(path)
-            else:
-                include_paths.append(path)
-        for filename in filenames:
-            path = os.path.join(dirpath, filename)
-            if should_ignore(path, ignore_patterns):
-                ignore_paths.append(path)
-            else:
-                include_paths.append(path)
-
-    # def recurse_folder(directory: str, indent_level: int) -> str:
-    #     try:
-    #         for item in sorted(os.listdir(directory)):
-    #             item_path = os.path.join(directory, item)
-    #             if should_ignore(item_path, ignore_patterns):
-    #                 continue
-
-    #             if os.path.isdir(item_path):
-    #                 tree_str += "    " * indent_level + f"- {item}/\n"
-    #                 tree_str += recurse_folder(item_path, indent_level + 1)
-    #             else:
-    #                 tree_str += "    " * indent_level + f"- {item}\n"
-    #     except OSError as e:
-    #         tree_str += f"    " * indent_level + f"- Error accessing folder: {e}\n"
-    #     return tree_str
+    search_directory(root_folder)
+    return matching_files
 
 
-def concatenate_files_to_markdown(directory: str, ignore_patterns: list) -> str:
+# def format_directory_structure(directory: str, ignore_patterns: list) -> str:
+#     """Creates a structured representation of the directory tree, excluding ignored paths.
+
+#     Args:
+#         directory: The root directory path.
+#         ignore_patterns: A list of patterns to ignore.
+
+#     Returns:
+#         A string representing the formatted directory tree structure.
+#     """
+
+#     def recurse_folder(current_dir: str, indent_level: int) -> str:
+#         tree_str = ""
+#         try:
+#             for item in sorted(os.listdir(current_dir)):
+#                 item_path = os.path.join(current_dir, item)
+#                 if should_ignore(item_path, ignore_patterns):
+#                     continue
+
+#                 if os.path.isdir(item_path):
+#                     tree_str += "    " * indent_level + f"- {item}/\n"
+#                     tree_str += recurse_folder(item_path, indent_level + 1)
+#                 else:
+#                     tree_str += "    " * indent_level + f"- {item}\n"
+#         except OSError as e:
+#             tree_str += f"    " * indent_level + f"- Error accessing folder: {e}\n"
+#         return tree_str
+
+#     return recurse_folder(directory, 0)
+
+
+def concatenate_files_to_markdown(files_to_include: list) -> str:
     """Concatenates all files in a directory and its subdirectories into a single Markdown string, excluding ignored paths.
 
     Args:
@@ -166,28 +138,23 @@ def concatenate_files_to_markdown(directory: str, ignore_patterns: list) -> str:
         A string containing the concatenated Markdown content of all files.
     """
     markdown_content = ""
-    for root, _, files in os.walk(directory):
-        for file in files:
-            file_path = os.path.join(root, file)
-            if should_ignore(file_path, ignore_patterns):
-                continue
-            language = get_language_extension(file)
-            markdown_content += f"\n\n## File: {file_path}\n"
-            if language:
-                markdown_content += f"```{language}\n"
-            else:
-                markdown_content += "```\n"
-            try:
-                with open(file_path, "r", encoding="utf-8") as infile:
-                    markdown_content += infile.read()
-            except Exception as e:
-                markdown_content += f"Error reading file: {e}\n"
-            markdown_content += "\n```"
-    return markdown_content
+    extensions_dict = get_language_extensions()
+
+    for file_path in files_to_include:
+        file_extension = os.path.splitext(file_path)[1]
+        language = extensions_dict[file_extension]
+        file_path_str = f"\n\nFile: {file_path}"
+        markdown_content += file_path_str + "\n"
+        markdown_content += f"```{language}\n"
+        with open(file_path, "r", encoding="utf-8") as file:
+            markdown_content += file.read() + "\n"
+        markdown_content += "```\n\n"
 
 
 def create_doc_file(
-    root_path: str, format: str = "md", save_path: str = None, include_file_tree: bool = True
+    root_path: str,
+    save_path: str = None,
+    include_file_tree: bool = True,
 ) -> str:
     """Generates a Markdown documentation for a project, optionally including the file tree, excluding paths specified in .gitignore.
 
@@ -200,20 +167,22 @@ def create_doc_file(
     Returns:
         A string containing the generated documentation.
     """
-    gitignore_path = os.path.join(root_path, ".gitignore")
-    if not os.path.exists(gitignore_path):
-        gitignore_path = os.path.join(root_path, "reposcribe", DEFAULT_GITIGNORE_TXT_PATH)
-    ignore_patterns = read_gitignore(gitignore_path)
+    root_path = os.path.abspath(root_path)
+    extensions_dict = get_language_extensions()
+    extensions = list(extensions_dict.keys())
+    all_file_paths = find_files_with_extensions(
+        extensions=extensions,
+        root_folder=root_path,
+        ignore_patterns_file=DEFAULT_IGNORE_FILE_PATH,
+    )
+
+    if not save_path:
+        save_path = os.path.join(root_path, "reposcribe.md")
 
     try:
-        documentation = concatenate_files_to_markdown(root_path, ignore_patterns)
-        if include_file_tree:
-            file_tree = format_directory_structure(root_path, ignore_patterns)
-            documentation += "\n\n## Directory Structure\n```\n" + file_tree + "```"
-
-        if save_path:
-            with open(save_path, "w", encoding="utf-8") as file:
-                file.write(documentation)
+        documentation = concatenate_files_to_markdown(all_file_paths)
+        with open(save_path, "w", encoding="utf-8") as file:
+            file.write(documentation)
         return documentation
     except Exception as e:
         raise Exception(f"Error generating documentation: {e}")
