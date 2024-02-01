@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="RepoScribe",
-    version='0.2.1',
+    version='0.2.3',
     author="Ruben Selander",
     author_email="info@nordicintel.com",
     description="A lightweight tool to compile project files and directories into a structured Markdown document",

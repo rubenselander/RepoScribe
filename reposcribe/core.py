@@ -46,10 +46,100 @@ def pattern_to_regex(pattern):
     return re.compile(pattern)
 
 
-def load_ignore_patterns(file_path):
-    """Load ignore patterns from a file and compile them into regex."""
-    with open(file_path, "r") as file:
-        patterns = [pattern_to_regex(line.strip()) for line in file if line.strip()]
+def get_ignore_patterns():
+    """Get ignore patterns compiled into regex."""
+    pattern_lines = [
+        "__pycache__/",
+        "*.py[cod]",
+        "*$py.class",
+        "*.so",
+        ".Python",
+        "build/",
+        "develop-eggs/",
+        "dist/",
+        "downloads/",
+        "eggs/",
+        ".eggs/",
+        "lib/",
+        "lib64/",
+        "parts/",
+        "sdist/",
+        "var/",
+        "wheels/",
+        "share/python-wheels/",
+        "*.egg-info/",
+        ".installed.cfg",
+        "*.egg",
+        "MANIFEST",
+        "*.manifest",
+        "*.spec",
+        "pip-log.txt",
+        "pip-delete-this-directory.txt",
+        "htmlcov/",
+        ".tox/",
+        ".nox/",
+        ".coverage",
+        ".coverage.*",
+        ".cache",
+        "nosetests.xml",
+        "coverage.xml",
+        "*.cover",
+        "*.py,cover",
+        ".hypothesis/",
+        ".pytest_cache/",
+        "cover/",
+        "*.mo",
+        "*.pot",
+        "*.log",
+        "local_settings.py",
+        "db.sqlite3",
+        "db.sqlite3-journal",
+        "instance/",
+        ".webassets-cache",
+        ".scrapy",
+        "docs/_build/",
+        ".pybuilder/",
+        "target/",
+        ".ipynb_checkpoints",
+        "profile_default/",
+        "ipython_config.py",
+        ".pdm.toml",
+        "__pypackages__/",
+        "celerybeat-schedule",
+        "celerybeat.pid",
+        "*.sage.py",
+        ".env",
+        ".venv",
+        "env/",
+        "venv/",
+        "ENV/",
+        "env.bak/",
+        "venv.bak/",
+        ".spyderproject",
+        ".spyproject",
+        ".ropeproject",
+        "/site",
+        ".mypy_cache/",
+        ".dmypy.json",
+        "dmypy.json",
+        ".pyre/",
+        ".pytype/",
+        "cython_debug/",
+        "ignore_patterns.txt",
+        "*.gitignore",
+        ".gitignore",
+        ".venv",
+        "venv",
+        "*test*",
+        "*tests*",
+        "*ignore*",
+        "*ignore/*",
+        "ignore.txt",
+        "reposcribe.md",
+        "*reposcribe*",
+        "RepoScribe.md",
+    ]
+    patterns = [pattern_to_regex(line) for line in pattern_lines]
     return patterns
 
 
@@ -61,16 +151,14 @@ def should_ignore_path(path, ignore_patterns):
     return False
 
 
-def find_files_with_extensions(
-    extensions=[".py"], root_folder=None, ignore_patterns_file=DEFAULT_IGNORE_FILE_PATH
-):
+def find_files_with_extensions(extensions=[".py"], root_folder=None):
     """
     Find all file paths matching given extensions, excluding those that match patterns in ignore_patterns.txt.
 
     Parameters:
     - extensions: List of extensions to include.
     - root_folder: Root directory to search within. Defaults to the current working directory.
-    - ignore_patterns_file: Path to a file containing patterns of files to ignore.
+
 
     Returns:
     - List of file paths matching the criteria.
@@ -80,7 +168,7 @@ def find_files_with_extensions(
     else:
         root_folder = Path(root_folder)
 
-    ignore_patterns = load_ignore_patterns(ignore_patterns_file)
+    ignore_patterns = get_ignore_patterns()
     matching_files = []
 
     def search_directory(directory):
@@ -94,37 +182,6 @@ def find_files_with_extensions(
 
     search_directory(root_folder)
     return matching_files
-
-
-# def format_directory_structure(directory: str, ignore_patterns: list) -> str:
-#     """Creates a structured representation of the directory tree, excluding ignored paths.
-
-#     Args:
-#         directory: The root directory path.
-#         ignore_patterns: A list of patterns to ignore.
-
-#     Returns:
-#         A string representing the formatted directory tree structure.
-#     """
-
-#     def recurse_folder(current_dir: str, indent_level: int) -> str:
-#         tree_str = ""
-#         try:
-#             for item in sorted(os.listdir(current_dir)):
-#                 item_path = os.path.join(current_dir, item)
-#                 if should_ignore(item_path, ignore_patterns):
-#                     continue
-
-#                 if os.path.isdir(item_path):
-#                     tree_str += "    " * indent_level + f"- {item}/\n"
-#                     tree_str += recurse_folder(item_path, indent_level + 1)
-#                 else:
-#                     tree_str += "    " * indent_level + f"- {item}\n"
-#         except OSError as e:
-#             tree_str += f"    " * indent_level + f"- Error accessing folder: {e}\n"
-#         return tree_str
-
-#     return recurse_folder(directory, 0)
 
 
 def concatenate_files_to_markdown(files_to_include: list) -> str:
@@ -154,7 +211,6 @@ def concatenate_files_to_markdown(files_to_include: list) -> str:
 def create_doc_file(
     root_path: str,
     save_path: str = None,
-    include_file_tree: bool = True,
 ) -> str:
     """Generates a Markdown documentation for a project, optionally including the file tree, excluding paths specified in .gitignore.
 
@@ -173,7 +229,6 @@ def create_doc_file(
     all_file_paths = find_files_with_extensions(
         extensions=extensions,
         root_folder=root_path,
-        ignore_patterns_file=DEFAULT_IGNORE_FILE_PATH,
     )
 
     if not save_path:
