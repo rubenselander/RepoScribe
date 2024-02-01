@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 
 
-DEFAULT_IGNORE_FILE_PATH = "reposcribe/ignore.txt"
+DEFAULT_IGNORE_FILE_PATH = "ignore.txt"
 
 
 def get_language_extensions() -> dict:
