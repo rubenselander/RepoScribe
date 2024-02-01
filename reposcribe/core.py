@@ -3,9 +3,6 @@ from pathlib import Path
 import re
 
 
-DEFAULT_IGNORE_FILE_PATH = "ignore.txt"
-
-
 def get_language_extensions() -> dict:
     """Returns a dictionary of file extensions and their corresponding language."""
 
@@ -30,7 +27,7 @@ def get_language_extensions() -> dict:
         ".vb": "vb",
         ".yml": "yaml",
         ".yaml": "yaml",
-        ".md": None,
+        ".md": "markdown",
         # Add more mappings as needed
     }
 
@@ -200,12 +197,20 @@ def concatenate_files_to_markdown(files_to_include: list) -> str:
     for file_path in files_to_include:
         file_extension = os.path.splitext(file_path)[1]
         language = extensions_dict[file_extension]
+        # if the language is markdown, we just include the file as is
+        if language == "markdown":
+            markdown_content += f"\n\nFile: {file_path}\n"
+            with open(file_path, "r", encoding="utf-8") as file:
+                markdown_content += file.read() + "\n\n"
+            continue
         file_path_str = f"\n\nFile: {file_path}"
         markdown_content += file_path_str + "\n"
         markdown_content += f"```{language}\n"
         with open(file_path, "r", encoding="utf-8") as file:
             markdown_content += file.read() + "\n"
         markdown_content += "```\n\n"
+
+    return markdown_content
 
 
 def create_doc_file(
@@ -231,13 +236,11 @@ def create_doc_file(
         root_folder=root_path,
     )
 
-    if not save_path:
-        save_path = os.path.join(root_path, "reposcribe.md")
-
     try:
         documentation = concatenate_files_to_markdown(all_file_paths)
-        with open(save_path, "w", encoding="utf-8") as file:
-            file.write(documentation)
+        if save_path is not None:
+            with open(save_path, "w", encoding="utf-8") as file:
+                file.write(documentation)
         return documentation
     except Exception as e:
         raise Exception(f"Error generating documentation: {e}")
